@@ -1,6 +1,6 @@
 Provides low level API access to HID Joy-Con devices through VB6 or VBA.
 
-* Vendor 'Nintendo' &H57E
+Vendor 'Nintendo' &H57E
 * Product 'Joy-Con (L)' &H2006
 * Product 'Joy-Con (R)' &H2007
 
