@@ -5,6 +5,7 @@ Product 'Joy-Con (L)' &H2006
 Product 'Joy-Con (R)' &H2007
 
 The report data returned appears to be bit flags and constants.
+```
 'Left Joycon bits
 1 SL1
 2 SR1
@@ -27,8 +28,9 @@ The report data returned appears to be bit flags and constants.
 000006 Thumb Down
 000007 Thumb Down Left
 000008 Thumb Dead Zone
-
+```
 'Right Joycon
+```
 1 SL2
 2 SR2
 01 B
@@ -50,3 +52,4 @@ The report data returned appears to be bit flags and constants.
 000006 Thumb Up
 000007 Thumb Up Right
 000008 Thumb Dead Zone
+```
