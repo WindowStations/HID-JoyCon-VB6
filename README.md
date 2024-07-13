@@ -4,7 +4,7 @@ Vendor Nintendo &H57E
 * Product Joy-Con (L) &H2006
 * Product Joy-Con (R) &H2007
 
-The report data returned appears to be bit flags and constants.
+Initial report (21) data returned appears to be bit flags and constants.
 ```
 'Left Joycon bits
 1 SL1
