@@ -43,7 +43,7 @@ Begin VB.Form frmMain
       Height          =   615
       Left            =   1080
       TabIndex        =   21
-      ToolTipText     =   "Detatch and close"
+      ToolTipText     =   "Detatch"
       Top             =   10920
       Width           =   3855
    End
@@ -434,6 +434,7 @@ Private Sub Form_Load()
    Set hid = New clsHIDJoyCon
    hid.FindHID
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 3F")
+   hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 30 01")
 End Sub
 Private Sub Form_Resize()
    If Me.WindowState = vbNormal Then
@@ -511,6 +512,7 @@ Private Sub cmdDeviceInfo_Click()
    DoEvents
    apiSleep 25
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 02")
+  
    isloading = False
 End Sub
 Private Sub cmdHCI_Click()
@@ -542,14 +544,12 @@ Private Sub cmdDisable6axis_Click()
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 40 00")
 End Sub
 Private Sub cmdDetach_Click()
-   'Detatches JoyCon from calling application.  The application will need to be restarted in order to access JoyCons after detatching them.
+   'Detatches JoyCon from calling application. reconnects?
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 30 01")
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 40 00")
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 48 00")
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 3F")
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 06 01")
-   Shell (App.Path & "\" & App.EXEName)
-   Unload Me
 End Sub
 Private Sub hid_DeviceConnection(ByVal Index As Integer, ByVal connected As Boolean)
    If Index = 1 Then

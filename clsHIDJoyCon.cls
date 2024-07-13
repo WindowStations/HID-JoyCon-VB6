@@ -340,39 +340,43 @@ Public Sub WriteReadDevices(ByVal lpData As String)
    End If
 End Sub
 Private Sub FindJoyConHIDs()
-   Dim hidHandle As Long
-   Dim SECURITY As SECURITY_ATTRIBUTES
-   Dim b As Byte
-   If VBA.Trim(DevicePathNameL) <> "" Then
-      'if we got a name from previous detail call, we may not need to find again
-      hidHandle = apiCreateFile(DevicePathNameL, GENERIC_READ Or GENERIC_WRITE, (FILE_SHARE_READ Or FILE_SHARE_WRITE), SECURITY, OPEN_EXISTING, 0&, 0)
-      If hidHandle <> 0 Then
-         mvarDeviceDetectedL = True
-         apiCloseHandle hidHandle
-         b = b + 1
-      Else
-         hidHandleL = 0
-         mvarDeviceDetectedL = False
-      End If
-   End If
-   If VBA.Trim(DevicePathNameR) <> "" Then
-      'if we got a name from previous detail call
-      hidHandle = apiCreateFile(DevicePathNameR, GENERIC_READ Or GENERIC_WRITE, (FILE_SHARE_READ Or FILE_SHARE_WRITE), SECURITY, OPEN_EXISTING, 0&, 0)
-      If hidHandle <> 0 Then
-         mvarDeviceDetectedR = True
-         apiCloseHandle hidHandle
-         b = b + 1
-      Else
-          hidHandleR = 0
-         mvarDeviceDetectedR = False
-      End If
-   End If
-   If b = 2 Then Exit Sub 'We already have device handles
+   Dim ret As Long
+   
+   
+'   Dim b As Byte
+'   If VBA.Trim(DevicePathNameL) <> "" Then
+'      Dim DeviceAttributesL As HIDD_ATTRIBUTES
+'      'if we got a name from previous detail call, we may not need to find again
+'      DeviceAttributesL.Size = LenB(DeviceAttributesL)
+'      ret = apiHidD_GetAttributes(hidHandleL, DeviceAttributesL)
+'      If ret <> 0 Then
+'         mvarDeviceDetectedL = True
+'         b = b + 1
+'      Else
+'         hidHandleL = 0
+'         mvarDeviceDetectedL = False
+'      End If
+'   End If
+'   If VBA.Trim(DevicePathNameR) <> "" Then
+'      Dim DeviceAttributesR As HIDD_ATTRIBUTES
+'      'if we got a name from previous detail call
+'      DeviceAttributesR.Size = LenB(DeviceAttributesR)
+'      ret = apiHidD_GetAttributes(hidHandleL, DeviceAttributesR)
+'      If ret <> 0 Then
+'         mvarDeviceDetectedR = True
+'         b = b + 1
+'      Else
+'         hidHandleR = 0
+'         mvarDeviceDetectedR = False
+'      End If
+'   End If
+'   If b = 2 Then Exit Sub 'We already have device handles
+   
    Dim i As Integer
    Dim GUIDString As String
    Dim HidGuid As GUID
    Dim MemberIndex As Long
-   Dim ret As Long
+   
    Dim MyDeviceInterfaceData As SP_DEVICE_INTERFACE_DATA
    Dim MyDeviceInfoData As SP_DEVINFO_DATA
    Dim MyDeviceInterfaceDetailData As SP_DEVICE_INTERFACE_DETAIL_DATA
@@ -380,12 +384,14 @@ Private Sub FindJoyConHIDs()
    Dim DataString As String
    Dim DetailData As Long
    Dim DetailDataBuffer() As Byte
+   Dim hidHandle As Long
    Dim DeviceAttributes As HIDD_ATTRIBUTES
    Dim DevicePathName As String
    Dim DeviceInfoSet As Long
    Dim LastDevice As Boolean
    Dim SECURITYL As SECURITY_ATTRIBUTES
    Dim SECURITYR As SECURITY_ATTRIBUTES
+   Dim SECURITY As SECURITY_ATTRIBUTES
    Dim PreparsedData As Long
    SECURITYL.lpSecurityDescriptor = 0
    SECURITYL.bInheritHandle = True
