@@ -1,6 +1,6 @@
 VERSION 5.00
 Begin VB.Form frmMain 
-   Caption         =   "HID Joy-Con output"
+   Caption         =   "Adaptive Device Interface"
    ClientHeight    =   13350
    ClientLeft      =   255
    ClientTop       =   330
@@ -10,6 +10,24 @@ Begin VB.Form frmMain
    ScaleHeight     =   13350
    ScaleWidth      =   20895
    StartUpPosition =   2  'CenterScreen
+   Begin VB.CommandButton cmdPlay 
+      Caption         =   "Play rumble"
+      BeginProperty Font 
+         Name            =   "Segoe UI"
+         Size            =   12
+         Charset         =   0
+         Weight          =   400
+         Underline       =   0   'False
+         Italic          =   0   'False
+         Strikethrough   =   0   'False
+      EndProperty
+      Height          =   615
+      Left            =   1080
+      TabIndex        =   23
+      ToolTipText     =   "Detatch"
+      Top             =   11760
+      Width           =   3855
+   End
    Begin VB.TextBox txtButtonEvent 
       BackColor       =   &H8000000F&
       BorderStyle     =   0  'None
@@ -269,9 +287,9 @@ Begin VB.Form frmMain
          Strikethrough   =   0   'False
       EndProperty
       Height          =   3525
-      ItemData        =   "frmMain.frx":15467
+      ItemData        =   "frmMain.frx":0442
       Left            =   240
-      List            =   "frmMain.frx":15469
+      List            =   "frmMain.frx":0444
       TabIndex        =   0
       Top             =   1080
       Width           =   5565
@@ -426,13 +444,26 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
-Private WithEvents hid As clsHIDJoyCon
+Private WithEvents hid As clsAdaptiveHID
 Attribute hid.VB_VarHelpID = -1
 Private Declare Function apiSleep Lib "kernel32" Alias "Sleep" (ByVal dwMilliseconds As Long) As Long
 Private isloading As Boolean
+'SendBuffer commands in bytes with bitfields
+'00 01 00 00 00 00 00 00 00 00 00 02"Request device info while in 3F mode.  Responds with 82 02 for success."
+'00 01 00 00 00 00 00 00 00 00 00 30 00 "Set lights off."
+'00 01 00 00 00 00 00 00 00 00 00 30 01 "Set lights on."
+'00 01 00 00 00 00 00 00 00 00 00 06 04  "Set HCI state (disconnect/page/pair/off). Reboots and Reconnects (page mode/HOME mode resets to 3F w/no flashing lights)."
+'00 01 00 00 00 00 00 00 00 00 00 03 3F "Set input report mode to Basic HID mode.  Pushes updates with every button press."
+'00 01 00 00 00 00 00 00 00 00 00 03 30 "Set input report mode to Standard full mode.  Pushes current state @60Hz."
+'00 01 00 00 00 00 00 00 00 00 00 03 31 "Set input report mode to NFC/IR mode. Pushes large packets @60Hz."
+'00 01 00 00 00 00 00 00 00 00 00 40 01 "Enable IMU (6-Axis sensor) while in 30 mode."
+'00 01 00 00 00 00 00 00 00 00 00 40 00 "Disable IMU (6-Axis sensor) while in 30 mode."
+'00 01 00 00 00 00 00 00 00 00 00 48 01 "Enable Rumble mode"
+'00 01 00 00 00 00 00 00 00 00 00 48 00 "Disable Rumble mode"
+'00 01 00 Fq Fq Fq Am Am Am "Invoke rumble motors by specifying the frequency Fq, and the amplitude Am."
 Private Sub Form_Load()
-   Set hid = New clsHIDJoyCon
-   hid.FindHID
+   Set hid = New clsAdaptiveHID
+   hid.FindJoyConHIDs
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 3F")
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 30 01")
 End Sub
@@ -452,41 +483,18 @@ Private Sub cmdDevices_Click()
       cmdDevices.Caption = "Pause"
       hid.EnableFindDevices 'Enable the timer that finds devices
       ChangeList "Device polling started"
-      hid.FindHID
+      hid.FindJoyConHIDs
    Else
       cmdDevices.Caption = "Poll devices" 'Change the command button to Continuous
       hid.DisableFindDevices  'Disable the timer that finds devices
       ChangeList "Device polling paused"
    End If
 End Sub
-Private Sub cmdPoll_Click()
-   If cmdPoll.Caption = "Poll reports" Then  'Enables the user to select 1-time or continuous data transfers.
-      cmdPoll.Caption = "Pause" 'Change the command button to pause
-      hid.EnablePoll 'Enable the timer to read and write to the device once/second.
-      ChangeList "Event polling started"
-   Else
-      cmdPoll.Caption = "Poll reports" 'Change the command button to Continuous
-      hid.DisablePoll 'Disable the timer that reads and writes to the device once/second.
-      ChangeList "Event polling paused"
-   End If
-End Sub
 Private Sub cmdClear_Click()
    txtState.Text = ""
    lstConnection.Clear
 End Sub
-Private Sub cmdWrite_Click()
-   hid.WriteReadDevices VBA.Trim(txtSend.Text)
-End Sub
-'SendBuffer commands in bytes with bitfields
-'00 01 00 00 00 00 00 00 00 00 00 02"Request device info while in 3F mode.  Responds with 82 02 for success."
-'00 01 00 00 00 00 00 00 00 00 00 30 00 00 00 00 03 02 01 00 "Set lights off."
-'00 01 00 00 00 00 00 00 00 00 00 30 03 02 01 00 00 00 00 00 "Set lights on."
-'00 01 00 00 00 00 00 00 00 00 00 06 04  "Set HCI state (disconnect/page/pair/off). Reboots and Reconnects (page mode/HOME mode resets to 3F w/no flashing lights)."
-'00 01 00 00 00 00 00 00 00 00 00 03 3F "Set input report mode to Basic HID mode.  Pushes updates with every button press."
-'00 01 00 00 00 00 00 00 00 00 00 03 30 "Set input report mode to Standard full mode.  Pushes current state @60Hz."
-'00 01 00 00 00 00 00 00 00 00 00 03 31 "Set input report mode to NFC/IR mode. Pushes large packets @60Hz."
-'00 01 00 00 00 00 00 00 00 00 00 40 01 "Enable IMU (6-Axis sensor) while in 30 mode."
-'00 01 00 00 00 00 00 00 00 00 00 40 00 "Disable IMU (6-Axis sensor) while in 30 mode."
+
 Private Sub optBasic_Click()
    If isloading = False Then
       hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 3F")
@@ -508,11 +516,7 @@ Private Sub cmdDeviceInfo_Click()
       isloading = True
    End If
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 3F")
-   hid.FlushQueue
-   DoEvents
-   apiSleep 25
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 02")
-  
    isloading = False
 End Sub
 Private Sub cmdHCI_Click()
@@ -533,11 +537,9 @@ Private Sub cmdEnable6axis_Click()
       optFull.Value = True
       isloading = True
    End If
-   hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 30")
-   hid.FlushQueue
-   DoEvents
-   apiSleep 25
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 40 01")
+   hid.FlushQueue
+   hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 30")
    isloading = False
 End Sub
 Private Sub cmdDisable6axis_Click()
@@ -551,26 +553,32 @@ Private Sub cmdDetach_Click()
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 03 3F")
    hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 06 01")
 End Sub
-Private Sub hid_DeviceConnection(ByVal Index As Integer, ByVal connected As Boolean)
-   If Index = 1 Then
-      If connected = True Then
-         ChangeList "Joy-Con (Left) detected"
-      Else
-         ChangeList "Joy-Con (Left) not detected"
-      End If
-   ElseIf Index = 2 Then
-      If connected = True Then
-         ChangeList "Joy-Con (Right) detected"
-      Else
-         ChangeList "Joy-Con (Right) not detected"
-      End If
+Private Sub cmdPlay_Click()
+   Dim i As Long
+   Dim r
+   Randomize
+   Dim h As String
+   hid.WriteReadDevices VBA.Trim("00 01 00 00 00 00 00 00 00 00 00 48 01")
+   r = Int((&HFF * Rnd) + 1) ' Generate random value between 1 and 6.88 00 62
+   h = CStr(Hex(r))
+   h = VBA.Mid(h, 1, 2) & " " & VBA.Mid(h, 3, 2) & " " & VBA.Mid(h, 5, 2)
+   hid.RumbleJoyCon 1, VBA.Trim("00 01 00  " & h & " c8 00 72")
+   
+     hid.RumbleJoyCon 1, VBA.Trim("00 01 00 Fq Fq Fq Am Am Am")
+End Sub
+Private Sub cmdWrite_Click()
+   hid.WriteReadDevices VBA.Trim(txtSend.Text)
+End Sub
+Private Sub cmdPoll_Click()
+   If cmdPoll.Caption = "Poll reports" Then  'Enables the user to select 1-time or continuous data transfers.
+      cmdPoll.Caption = "Pause" 'Change the command button to pause
+      hid.EnablePoll 'Enable the timer to read and write to the device once/second.
+      ChangeList "Event polling started"
+   Else
+      cmdPoll.Caption = "Poll reports" 'Change the command button to Continuous
+      hid.DisablePoll 'Disable the timer that reads and writes to the device once/second.
+      ChangeList "Event polling paused"
    End If
-End Sub
-Private Sub hid_ClickButton(ByVal joycon As Integer, ByVal down As Boolean, ByVal btns As String)
-   'txtButtonEvent.Text = "JoyCon " & CStr(joycon) & " " & btns & vbCrLf
-End Sub
-Private Sub hid_WriteReportResult(ByVal Report As String)
-    'txtState.Text = txtState.Text & Report & vbCrLf
 End Sub
 Public Sub ChangeText(ByVal txt As String)
    Dim s() As String
@@ -596,4 +604,28 @@ Public Sub ChangeList(ByVal txt As String)
       Next
    End If
    lstConnection.ListIndex = lstConnection.ListCount - 1 'scroll
+End Sub
+Private Sub hid_DeviceConnection(ByVal Index As Integer, ByVal connected As Boolean)
+   If Index = 1 Then
+      If connected = True Then
+         ChangeList "Joy-Con (Left) detected"
+      Else
+         ChangeList "Joy-Con (Left) not detected"
+      End If
+   ElseIf Index = 2 Then
+      If connected = True Then
+         ChangeList "Joy-Con (Right) detected"
+      Else
+         ChangeList "Joy-Con (Right) not detected"
+      End If
+   End If
+End Sub
+Private Sub hid_ClickButton(ByVal joycon As Integer, ByVal down As Boolean, ByVal btns As String)
+   ChangeText "JoyCon " & CStr(joycon) & " " & btns & vbCrLf
+End Sub
+Private Sub hid_ReadReportResult(ByVal Report As String)
+   ChangeText Report
+End Sub
+Private Sub hid_WriteReportResult(ByVal Report As String)
+    ChangeText Report
 End Sub
