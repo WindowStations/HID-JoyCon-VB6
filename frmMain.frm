@@ -564,7 +564,7 @@ Private Sub cmdPlay_Click()
    h = VBA.Mid(h, 1, 2) & " " & VBA.Mid(h, 3, 2) & " " & VBA.Mid(h, 5, 2)
    hid.RumbleJoyCon 1, VBA.Trim("00 01 00  " & h & " c8 00 72")
    
-     hid.RumbleJoyCon 1, VBA.Trim("00 01 00 Fq Fq Fq Am Am Am")
+    ' hid.RumbleJoyCon 1, VBA.Trim("00 01 00 Fq Fq Fq Am Am Am")
 End Sub
 Private Sub cmdWrite_Click()
    hid.WriteReadDevices VBA.Trim(txtSend.Text)
